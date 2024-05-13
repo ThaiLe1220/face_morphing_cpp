@@ -1,0 +1,29 @@
+g++ -std=c++11 test_opencv.cpp -o test_opencv `pkg-config --cflags --libs opencv4`
+./test_opencv
+
+sudo ln -s /opt/homebrew/lib/libavcodec.61.dylib /opt/homebrew/lib/libavcodec.60.dylib
+
+ls /opt/homebrew/lib/ | grep libavcodec
+pkg-config --modversion opencv4
+pkg-config --libs opencv4
+
+
+mkdir build
+
+cd build
+cmake ..
+cmake --build . --config Release
+cd ..
+./build/main
+
+cd /Users/lehongthai/Code/face_morph_c++/build
+make
+cd ..
+
+./build/test_opencv ./Carl_Jung_3_4.jpg
+./build/test_dlib ./Carl_Jung_3_4.jpg
+./build/test_dlib ./Carl_Jung_full.jpg
+./build/test_eigen
+
+./build/main
+
