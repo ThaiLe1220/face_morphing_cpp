@@ -6,8 +6,12 @@
 #include <vector>
 #include <tuple>
 #include <opencv2/opencv.hpp>
+#include <chrono>
 
 int main() {
+    // Start the clock
+    auto start = std::chrono::high_resolution_clock::now();
+
     // Path to input images
     std::string pathToFirstImage = "img/bradpitt.png";
     std::string pathToSecondImage = "img/ld2.png";
@@ -30,6 +34,11 @@ int main() {
     std::string outputPath = "img/morphed_image.jpg";
     cv::imwrite(outputPath, result);
     std::cout << "Morphed image saved to: " << outputPath << std::endl;
+
+    // Stop the clock and calculate the elapsed time
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Elapsed time: " << elapsed.count() << " seconds." << std::endl;
 
     return 0;
 }
