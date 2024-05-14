@@ -1,19 +1,35 @@
 #include "face_correspondences.h"
+#include <chrono>
 
 // Generates data regarding face correspondences between two images using Dlib's face detection and landmark prediction.
 FaceCorrespondenceData generate_face_correspondences(const std::string& filename1, const std::string& filename2) {
+    auto start_total = std::chrono::high_resolution_clock::now();
+
+    auto start = std::chrono::high_resolution_clock::now();
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector(); // Load Dlib's face detector
     dlib::shape_predictor predictor;
     dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor; // Load Dlib's shape predictor
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Time for loading detector and predictor: " << elapsed.count() << " seconds." << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
     std::vector<cv::Point2f> corresp(68, cv::Point2f(0.0f, 0.0f)); // Initialize correspondence vector with cv::Point2f
     std::vector<std::vector<cv::Point2f>> lists(2); // Lists to hold landmarks for each image
+    finish = std::chrono::high_resolution_clock::now();
+    elapsed = finish - start;
+    std::cout << "Time for initializing data structures: " << elapsed.count() << " seconds." << std::endl;
 
+    start = std::chrono::high_resolution_clock::now();
     cv::Mat cropped1, cropped2;
     cv::Mat cvImg1 = cv::imread(filename1);
     cv::Mat cvImg2 = cv::imread(filename2);
     crop_image(cvImg1, cvImg2, cropped1, cropped2);
     std::vector<cv::Mat> imgList = { cropped1,cropped2 };
     std::vector<int> size = { cropped1.rows, cropped1.cols };
+    finish = std::chrono::high_resolution_clock::now();
+    elapsed = finish - start;
+    // std::cout << "Time for loading and cropping images: " << elapsed.count() << " seconds." << std::endl;
 
     std::vector<cv::Point2f> extra_points = {
         cv::Point2f(1.0f, 1.0f),
@@ -30,14 +46,19 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
         auto& img = imgList[idx];
         auto& currList = lists[idx];
 
+        start = std::chrono::high_resolution_clock::now();
         dlib::cv_image<dlib::bgr_pixel> dlib_img(img); // Convert OpenCV image to Dlib format
         std::vector<dlib::rectangle> dets = detector(dlib_img, 1); // Detect faces
+        finish = std::chrono::high_resolution_clock::now();
+        elapsed = finish - start;
+        // std::cout << "Time for detecting faces in image " << idx + 1 << ": " << elapsed.count() << " seconds." << std::endl;
 
         if (dets.empty()) {
             print_error_message();
             continue;
         }
 
+        start = std::chrono::high_resolution_clock::now();
         for (auto& rect : dets) {
             // Predict facial landmarks
             dlib::full_object_detection shape = predictor(dlib_img, rect);
@@ -51,8 +72,12 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
 
             currList.insert(currList.end(), extra_points.begin(), extra_points.end());
         }
+        finish = std::chrono::high_resolution_clock::now();
+        elapsed = finish - start;
+        // std::cout << "Time for predicting landmarks in image " << idx + 1 << ": " << elapsed.count() << " seconds." << std::endl;
     }
 
+    start = std::chrono::high_resolution_clock::now();
     // Compute average coordinates of landmarks
     for (auto& point : corresp) {
         point.x /= imgList.size();
@@ -60,6 +85,9 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
     }
 
     corresp.insert(corresp.end(), extra_points.begin(), extra_points.end()); // Add extra points to the final correspondence list
+    finish = std::chrono::high_resolution_clock::now();
+    elapsed = finish - start;
+    // std::cout << "Time for computing average coordinates: " << elapsed.count() << " seconds." << std::endl;
 
     FaceCorrespondenceData result;
     result.size = size;
@@ -68,6 +96,10 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
     result.list1 = lists[0];
     result.list2 = lists[1];
     result.corresp = corresp;
+
+    auto finish_total = std::chrono::high_resolution_clock::now();
+    elapsed = finish_total - start_total;
+    // std::cout << "Time for generating face correspondences: " << elapsed.count() << " seconds." << std::endl;
 
     return result;
 }

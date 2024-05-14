@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+# Enable compiler optimizations for Release build
+set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
 # Locate necessary packages
 find_package(OpenCV REQUIRED)
 find_package(dlib REQUIRED)
@@ -24,3 +28,6 @@ add_executable(frame_extract frame_extract.cc)
 # Link libraries to the executable
 target_link_libraries(main ${OpenCV_LIBS} dlib::dlib)
 target_link_libraries(frame_extract ${OpenCV_LIBS} dlib::dlib)
+
+# add_executable(frame_extract frame_extract.cc)
+# target_link_libraries(frame_extract ${OpenCV_LIBS} dlib::dlib)
