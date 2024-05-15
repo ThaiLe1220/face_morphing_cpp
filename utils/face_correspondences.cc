@@ -1,41 +1,39 @@
 #include "face_correspondences.h"
 
 // Generates data regarding face correspondences between two images using Dlib's face detection and landmark prediction.
-FaceCorrespondenceData generate_face_correspondences(const std::string& filename1, const std::string& filename2) {
+FaceCorrespondenceData generate_face_correspondences(const cv::Mat& cvImg1, const std::vector<cv::Point2f> lmLists2) {
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector(); // Load Dlib's face detector
     dlib::shape_predictor predictor;
     dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor; // Load Dlib's shape predictor
     std::vector<cv::Point2f> corresp(68, cv::Point2f(0.0f, 0.0f)); // Initialize correspondence vector with cv::Point2f
-    std::vector<std::vector<cv::Point2f>> lists(2); // Lists to hold landmarks for each image
-
+    // std::vector<std::vector<cv::Point2f>> lists(2); // Lists to hold landmarks for each image
+    std::vector<cv::Point2f> lmLists1;
     cv::Mat cropped1, cropped2;
-    cv::Mat cvImg1 = cv::imread(filename1);
-    cv::Mat cvImg2 = cv::imread(filename2);
-    crop_image(cvImg1, cvImg2, cropped1, cropped2);
-    std::vector<cv::Mat> imgList = { cropped1,cropped2 };
-    std::vector<int> size = { cropped1.rows, cropped1.cols };
+    // crop_image(cvImg1, cvImg2, cropped1, cropped2);
+    std::vector<cv::Mat> imgList = { cvImg1 };
+    std::vector<int> size = { cvImg1.rows, cvImg1.cols };
 
-    std::vector<cv::Point2f> extra_points = {
-        cv::Point2f(1.0f, 1.0f),
-        cv::Point2f(static_cast<float>(size[1] - 1), 1.0f),
-        cv::Point2f(static_cast<float>(size[1] / 2), 1.0f),
-        cv::Point2f(1.0f, static_cast<float>(size[0] - 1)),
-        cv::Point2f(1.0f, static_cast<float>(size[0] / 2)),
-        cv::Point2f(static_cast<float>(size[1] / 2), static_cast<float>(size[0] - 1)),
-        cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] - 1)),
-        cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] / 2))
-    };
+    // std::vector<cv::Point2f> extra_points = {
+    //     cv::Point2f(1.0f, 1.0f),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), 1.0f),
+    //     cv::Point2f(static_cast<float>(size[1] / 2), 1.0f),
+    //     cv::Point2f(1.0f, static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(1.0f, static_cast<float>(size[0] / 2)),
+    //     cv::Point2f(static_cast<float>(size[1] / 2), static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] / 2))
+    // };
 
     for (int idx = 0; idx < imgList.size(); ++idx) {
         auto& img = imgList[idx];
-        auto& currList = lists[idx];
+        auto& currList = lmLists1;
 
         dlib::cv_image<dlib::bgr_pixel> dlib_img(img); // Convert OpenCV image to Dlib format
-        std::vector<dlib::rectangle> dets = detector(dlib_img, 1); // Detect faces
+        std::vector<dlib::rectangle> dets = detector(dlib_img); // Detect faces
 
         if (dets.empty()) {
             print_error_message();
-            continue;
+            throw std::runtime_error("No face!");
         }
 
         for (auto& rect : dets) {
@@ -47,9 +45,9 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
                 cv::Point2f pt(shape.part(i).x(), shape.part(i).y());
                 currList.push_back(pt);
                 corresp[i] += pt; // Accumulate coordinates for averaging
+                // corresp[i] += lmLists2[i];
             }
-
-            currList.insert(currList.end(), extra_points.begin(), extra_points.end());
+            // currList.insert(currList.end(), extra_points.begin(), extra_points.end());
         }
     }
 
@@ -59,14 +57,13 @@ FaceCorrespondenceData generate_face_correspondences(const std::string& filename
         point.y /= imgList.size();
     }
 
-    corresp.insert(corresp.end(), extra_points.begin(), extra_points.end()); // Add extra points to the final correspondence list
+    // corresp.insert(corresp.end(), extra_points.begin(), extra_points.end()); // Add extra points to the final correspondence list
 
     FaceCorrespondenceData result;
     result.size = size;
-    result.cropped1 = cropped1;
-    result.cropped2 = cropped2;
-    result.list1 = lists[0];
-    result.list2 = lists[1];
+    result.img1 = cvImg1;
+    result.list1 = lmLists1;
+    result.list2 = lmLists2;
     result.corresp = corresp;
 
     return result;

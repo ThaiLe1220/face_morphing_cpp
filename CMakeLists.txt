@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+# Enable compiler optimizations for Release build
+set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math -march=native -flto -fprofile-use -fomit-frame-pointer -funroll-loops")
+# -march=native -flto -fomit-frame-pointer -fprofile-generate
 # Locate necessary packages
 find_package(OpenCV REQUIRED)
 find_package(dlib REQUIRED)
@@ -17,7 +21,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils)
 add_executable(main main.cc
     utils/face_correspondences.cc
     utils/delaunay_triangulation.cc
-    utils/face_morph.cc)
+    utils/face_morph.cc
+    utils/video_handler.cc)
 
 add_executable(frame_extract frame_extract.cc)
 

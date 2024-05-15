@@ -12,7 +12,6 @@ std::vector<std::tuple<int, int, int>> drawDelaunay(int f_w, int f_h, cv::Subdiv
     std::vector<cv::Vec6f> triangleList;
     subdiv.getTriangleList(triangleList);
     cv::Rect r(0, 0, f_w, f_h);
-
     for (size_t i = 0; i < triangleList.size(); i++) {
         cv::Vec6f t = triangleList[i];
         cv::Point2f pt1(t[0], t[1]);
@@ -33,7 +32,6 @@ std::vector<std::tuple<int, int, int>> makeDelaunay(int f_w, int f_h, std::vecto
     cv::Rect rect(0, 0, f_w, f_h);
     cv::Subdiv2D subdiv(rect);
     std::unordered_map<cv::Point2f, int, Point2fHash> dictionary;
-
 
     // Insert points into subdiv and map them by index
     for (int i = 0; i < points.size(); ++i) {

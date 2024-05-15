@@ -12,8 +12,8 @@
 // Structure to store data about face correspondences including image dimensions, cropped images, and landmark lists.
 struct FaceCorrespondenceData {
     std::vector<int> size;                            // Width and height of the cropped images
-    cv::Mat cropped1;                                 // First cropped image
-    cv::Mat cropped2;                                 // Second cropped image
+    cv::Mat img1;                                 // First cropped image
+    cv::Mat img2;                                 // Second cropped image
     std::vector<cv::Point2f> list1;                   // Landmarks of the first image
     std::vector<cv::Point2f> list2;                   // Landmarks of the second image
     std::vector<cv::Point2f> corresp;                 // Averaged coordinates of landmarks
@@ -29,6 +29,6 @@ void calculate_margin_help(const cv::Mat& img1, const cv::Mat& img2, std::vector
 void crop_image(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& cropped1, cv::Mat& cropped2);
 
 // Generates face correspondence data
-FaceCorrespondenceData generate_face_correspondences(const std::string& filename1, const std::string& filename2);
+FaceCorrespondenceData generate_face_correspondences(const cv::Mat& cvImg1, const std::vector<cv::Point2f> lmLists2);
 
 #endif // FACE_CORRESPONDENCES_H
