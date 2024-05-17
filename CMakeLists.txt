@@ -24,10 +24,14 @@ add_executable(main main.cc
     utils/face_morph.cc)
 
 add_executable(frame_extract frame_extract.cc)
+add_executable(test test.cc 
+    utils/image_processor.cc)
+
 
 # Link libraries to the executable
 target_link_libraries(main ${OpenCV_LIBS} dlib::dlib)
 target_link_libraries(frame_extract ${OpenCV_LIBS} dlib::dlib)
+target_link_libraries(test ${OpenCV_LIBS} dlib::dlib)
 
 # add_executable(frame_extract frame_extract.cc)
 # target_link_libraries(frame_extract ${OpenCV_LIBS} dlib::dlib)

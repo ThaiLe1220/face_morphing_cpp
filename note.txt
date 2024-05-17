@@ -26,4 +26,4 @@ cd ..
 ./build/test_eigen
 
 ./build/main
-
+./build/test img/bradpitt.png img/bradpitt_g.png
