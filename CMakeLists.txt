@@ -8,7 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Enable compiler optimizations for Release build
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math -march=native -flto -fomit-frame-pointer -funroll-loops")
 
 # Locate necessary packages
 find_package(OpenCV REQUIRED)

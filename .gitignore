@@ -2,3 +2,5 @@ build
 .vscode
 .editorconfig
 frames
+.DS_Store
+

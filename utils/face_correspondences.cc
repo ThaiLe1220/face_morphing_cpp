@@ -1,126 +1,100 @@
 #include "face_correspondences.h"
-#include <chrono>
 
 // Generates data regarding face correspondences between two images using Dlib's face detection and landmark prediction.
-FaceCorrespondenceData generate_face_correspondences(const std::string& filename1, const std::string& filename2) {
-    auto start_total = std::chrono::high_resolution_clock::now();
-
-    auto start = std::chrono::high_resolution_clock::now();
+FaceCorrespondenceData generate_face_correspondences(const cv::Mat &cvImg1, const std::vector<cv::Point2f> lmLists2)
+{
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector(); // Load Dlib's face detector
     dlib::shape_predictor predictor;
     dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor; // Load Dlib's shape predictor
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "Time for loading detector and predictor: " << elapsed.count() << " seconds." << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
-    std::vector<cv::Point2f> corresp(68, cv::Point2f(0.0f, 0.0f)); // Initialize correspondence vector with cv::Point2f
-    std::vector<std::vector<cv::Point2f>> lists(2); // Lists to hold landmarks for each image
-    finish = std::chrono::high_resolution_clock::now();
-    elapsed = finish - start;
-    std::cout << "Time for initializing data structures: " << elapsed.count() << " seconds." << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
+    std::vector<cv::Point2f> corresp(68, cv::Point2f(0.0f, 0.0f));           // Initialize correspondence vector with cv::Point2f
+    // std::vector<std::vector<cv::Point2f>> lists(2); // Lists to hold landmarks for each image
+    std::vector<cv::Point2f> lmLists1;
     cv::Mat cropped1, cropped2;
-    cv::Mat cvImg1 = cv::imread(filename1);
-    cv::Mat cvImg2 = cv::imread(filename2);
-    crop_image(cvImg1, cvImg2, cropped1, cropped2);
-    std::vector<cv::Mat> imgList = { cropped1,cropped2 };
-    std::vector<int> size = { cropped1.rows, cropped1.cols };
-    finish = std::chrono::high_resolution_clock::now();
-    elapsed = finish - start;
-    // std::cout << "Time for loading and cropping images: " << elapsed.count() << " seconds." << std::endl;
+    // crop_image(cvImg1, cvImg2, cropped1, cropped2);
+    std::vector<cv::Mat> imgList = {cvImg1};
+    std::vector<int> size = {cvImg1.rows, cvImg1.cols};
 
-    std::vector<cv::Point2f> extra_points = {
-        cv::Point2f(1.0f, 1.0f),
-        cv::Point2f(static_cast<float>(size[1] - 1), 1.0f),
-        cv::Point2f(static_cast<float>(size[1] / 2), 1.0f),
-        cv::Point2f(1.0f, static_cast<float>(size[0] - 1)),
-        cv::Point2f(1.0f, static_cast<float>(size[0] / 2)),
-        cv::Point2f(static_cast<float>(size[1] / 2), static_cast<float>(size[0] - 1)),
-        cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] - 1)),
-        cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] / 2))
-    };
+    // std::vector<cv::Point2f> extra_points = {
+    //     cv::Point2f(1.0f, 1.0f),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), 1.0f),
+    //     cv::Point2f(static_cast<float>(size[1] / 2), 1.0f),
+    //     cv::Point2f(1.0f, static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(1.0f, static_cast<float>(size[0] / 2)),
+    //     cv::Point2f(static_cast<float>(size[1] / 2), static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] - 1)),
+    //     cv::Point2f(static_cast<float>(size[1] - 1), static_cast<float>(size[0] / 2))
+    // };
 
-    for (int idx = 0; idx < imgList.size(); ++idx) {
-        auto& img = imgList[idx];
-        auto& currList = lists[idx];
+    for (int idx = 0; idx < imgList.size(); ++idx)
+    {
+        auto &img = imgList[idx];
+        auto &currList = lmLists1;
 
-        start = std::chrono::high_resolution_clock::now();
-        dlib::cv_image<dlib::bgr_pixel> dlib_img(img); // Convert OpenCV image to Dlib format
-        std::vector<dlib::rectangle> dets = detector(dlib_img, 1); // Detect faces
-        finish = std::chrono::high_resolution_clock::now();
-        elapsed = finish - start;
-        // std::cout << "Time for detecting faces in image " << idx + 1 << ": " << elapsed.count() << " seconds." << std::endl;
+        dlib::cv_image<dlib::bgr_pixel> dlib_img(img);          // Convert OpenCV image to Dlib format
+        std::vector<dlib::rectangle> dets = detector(dlib_img); // Detect faces
 
-        if (dets.empty()) {
+        if (dets.empty())
+        {
             print_error_message();
-            continue;
+            throw std::runtime_error("No face!");
         }
 
-        start = std::chrono::high_resolution_clock::now();
-        for (auto& rect : dets) {
+        for (auto &rect : dets)
+        {
             // Predict facial landmarks
             dlib::full_object_detection shape = predictor(dlib_img, rect);
 
             // Store landmarks and accumulate coordinates for averaging
-            for (int i = 0; i < 68; i++) {
+            for (int i = 0; i < 68; i++)
+            {
                 cv::Point2f pt(shape.part(i).x(), shape.part(i).y());
                 currList.push_back(pt);
                 corresp[i] += pt; // Accumulate coordinates for averaging
+                // corresp[i] += lmLists2[i];
             }
-
-            currList.insert(currList.end(), extra_points.begin(), extra_points.end());
+            // currList.insert(currList.end(), extra_points.begin(), extra_points.end());
         }
-        finish = std::chrono::high_resolution_clock::now();
-        elapsed = finish - start;
-        // std::cout << "Time for predicting landmarks in image " << idx + 1 << ": " << elapsed.count() << " seconds." << std::endl;
     }
 
-    start = std::chrono::high_resolution_clock::now();
     // Compute average coordinates of landmarks
-    for (auto& point : corresp) {
+    for (auto &point : corresp)
+    {
         point.x /= imgList.size();
         point.y /= imgList.size();
     }
 
-    corresp.insert(corresp.end(), extra_points.begin(), extra_points.end()); // Add extra points to the final correspondence list
-    finish = std::chrono::high_resolution_clock::now();
-    elapsed = finish - start;
-    // std::cout << "Time for computing average coordinates: " << elapsed.count() << " seconds." << std::endl;
+    // corresp.insert(corresp.end(), extra_points.begin(), extra_points.end()); // Add extra points to the final correspondence list
 
     FaceCorrespondenceData result;
     result.size = size;
-    result.cropped1 = cropped1;
-    result.cropped2 = cropped2;
-    result.list1 = lists[0];
-    result.list2 = lists[1];
+    result.img1 = cvImg1;
+    result.list1 = lmLists1;
+    result.list2 = lmLists2;
     result.corresp = corresp;
-
-    auto finish_total = std::chrono::high_resolution_clock::now();
-    elapsed = finish_total - start_total;
-    // std::cout << "Time for generating face correspondences: " << elapsed.count() << " seconds." << std::endl;
 
     return result;
 }
 
 // Print an error message if no face is detected in the image processing step
-void print_error_message() {
+void print_error_message()
+{
     std::cerr << "Sorry, no face detected in the image." << std::endl;
 }
 
 // Calculates margins for cropping based on the dimensions of the input images to align them in size
-void calculate_margin_help(const cv::Mat& img1, const cv::Mat& img2, std::vector<int>& results) {
+void calculate_margin_help(const cv::Mat &img1, const cv::Mat &img2, std::vector<int> &results)
+{
     int diff0 = abs(img1.rows - img2.rows) / 2;
     int diff1 = abs(img1.cols - img2.cols) / 2;
     int avg0 = (img1.rows + img2.rows) / 2;
     int avg1 = (img1.cols + img2.cols) / 2;
 
-    results = { img1.rows, img2.rows, img1.cols, img2.cols, diff0, diff1, avg0, avg1 };
+    results = {img1.rows, img2.rows, img1.cols, img2.cols, diff0, diff1, avg0, avg1};
 }
 
 // Crop two images to ensure they are of the same dimensions for further processing
-void crop_image(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& cropped1, cv::Mat& cropped2) {
+void crop_image(const cv::Mat &img1, const cv::Mat &img2, cv::Mat &cropped1, cv::Mat &cropped2)
+{
     std::vector<int> metrics;
     calculate_margin_help(img1, img2, metrics);
 
@@ -135,23 +109,27 @@ void crop_image(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& cropped1, cv:
     cv::Rect roi1, roi2;
 
     // Determine cropping areas based on relative dimensions of input images
-    if (size1_rows >= size2_rows && size1_cols >= size2_cols) {
+    if (size1_rows >= size2_rows && size1_cols >= size2_cols)
+    {
         roi1 = cv::Rect(diff1, diff0, size2_cols, size2_rows);
         cropped1 = img1(roi1);
         cropped2 = img2;
     }
-    else if (size1_rows <= size2_rows && size1_cols <= size2_cols) {
+    else if (size1_rows <= size2_rows && size1_cols <= size2_cols)
+    {
         roi2 = cv::Rect(diff1, diff0, size1_cols, size1_rows);
         cropped2 = img2(roi2);
         cropped1 = img1;
     }
-    else if (size1_rows >= size2_rows && size1_cols <= size2_cols) {
+    else if (size1_rows >= size2_rows && size1_cols <= size2_cols)
+    {
         roi1 = cv::Rect(0, diff0, size1_cols, size2_rows);
         roi2 = cv::Rect(diff1, 0, size1_cols, size2_rows);
         cropped1 = img1(roi1);
         cropped2 = img2(roi2);
     }
-    else if (size1_rows <= size2_rows && size1_cols >= size2_cols) {
+    else if (size1_rows <= size2_rows && size1_cols >= size2_cols)
+    {
         roi1 = cv::Rect(diff1, 0, size2_cols, size1_rows);
         roi2 = cv::Rect(0, diff0, size2_cols, size1_rows);
         cropped1 = img1(roi1);
