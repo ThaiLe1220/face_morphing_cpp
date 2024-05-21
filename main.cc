@@ -61,7 +61,7 @@ int main() {
         try {
             // Start the clock
             auto start = std::chrono::high_resolution_clock::now();
-            
+
             std::cout << "Frame: " << i << std::endl;
             cv::Mat image = frames_with_timestamp[i].first;
             // Generate face correspondences between two images
@@ -84,7 +84,8 @@ int main() {
             auto finish = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = finish - start;
             std::cout << "Elapsed time for frame " << i << " : " << elapsed.count() << " seconds." << std::endl;
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             std::cerr << "Error occurred: " << e.what() << std::endl;
         }
     }

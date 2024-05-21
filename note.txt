@@ -10,20 +10,14 @@ pkg-config --libs opencv4
 
 mkdir build
 
+
+cmake -DUSE_PROFILE_GENERATE=ON .
+cmake -DUSE_PROFILE_USE=ON .
+
 cd build
-cmake ..
+cmake .
 cmake --build . --config Release
 cd ..
-./build/main
+./build/test 
 
-cd /Users/lehongthai/Code/face_morph_c++/build
-make
-cd ..
-
-./build/test_opencv ./Carl_Jung_3_4.jpg
-./build/test_dlib ./Carl_Jung_3_4.jpg
-./build/test_dlib ./Carl_Jung_full.jpg
-./build/test_eigen
-
-./build/main
 
